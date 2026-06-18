@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# IFCost — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Antarmuka web IFCost: penampil 3D IFC, tabel QTO, estimasi RAB, dan ringkasan proyek.
+Bagian dari proyek [IFCost](../README.md).
 
-Currently, two official plugins are available:
+**Live:** https://ifcost-web.vercel.app
+**Backend API:** https://zacky912-ifcost-web.hf.space
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
 
-## React Compiler
+React 18 · Vite · TypeScript · Tailwind CSS · [@thatopen/components](https://docs.thatopen.com/) (viewer 3D) · Recharts (chart) · axios
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Menjalankan lokal
 
-## Expanding the ESLint configuration
+```bash
+npm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# arahkan ke backend (lokal atau HF)
+echo "VITE_API_URL=http://localhost:8000" > .env
+# atau: echo "VITE_API_URL=https://zacky912-ifcost-web.hf.space" > .env
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+npm run dev        # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Script
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Perintah | Fungsi |
+|----------|--------|
+| `npm run dev` | Dev server (Vite, HMR) |
+| `npm run build` | Build production → `dist/` (copy WASM + tsc + vite build) |
+| `npm run preview` | Preview hasil build |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Variabel Lingkungan
+
+| Variabel | Contoh | Keterangan |
+|----------|--------|------------|
+| `VITE_API_URL` | `https://zacky912-ifcost-web.hf.space` | URL backend. **Wajib** di-set, dibaca saat build. |
+
+> `.env` di-gitignore. Di Vercel, set lewat **Settings → Environment Variables**, lalu **Redeploy** (Vite membaca env saat build, bukan runtime).
+
+## Struktur
+
 ```
+src/
+├── components/
+│   ├── Navbar.tsx · Sidebar.tsx
+│   ├── tabs/        # ViewerTab, QTOTab, RABTab, SummaryTab
+│   └── ui/          # MetricCard, UploadZone
+├── hooks/useAnalysis.ts     # POST /api/analyze
+├── utils/                   # rab.ts, format.ts
+└── types/ifc.ts
+```
+
+## Catatan teknis
+
+- **WASM:** `web-ifc.wasm` / `web-ifc-mt.wasm` disalin ke `public/` saat build (`copy-wasm.cjs`), loader di-set `autoSetWasm: false` agar tidak bergantung CDN.
+- **@thatopen v3:** `ifcLoader.load()` mengembalikan `FragmentsModel` — yang ditambahkan ke scene adalah `model.object`, lalu wajib `fragmentsManager.core.update(true)` untuk render.
+
+## Deploy (Vercel)
+
+Root directory: `frontend/`. Build: `npm run build`, output: `dist`.
+`vercel.json` sudah berisi SPA rewrite ke `index.html`.
+Jangan lupa set `VITE_API_URL` di Environment Variables.
