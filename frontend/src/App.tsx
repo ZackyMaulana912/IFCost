@@ -40,12 +40,12 @@ export default function App() {
           {error && (
             <div
               style={{
-                background: '#FEF2F2',
-                border: '1px solid #FECACA',
+                background: 'rgba(248,113,113,0.12)',
+                border: '1px solid rgba(248,113,113,0.3)',
                 borderRadius: 0,
                 padding: '10px 24px',
                 fontSize: 13,
-                color: '#B91C1C',
+                color: '#FCA5A5',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
@@ -63,7 +63,7 @@ export default function App() {
               style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'rgba(248,249,250,0.8)',
+                background: 'rgba(11,16,32,0.82)',
                 backdropFilter: 'blur(4px)',
                 zIndex: 10,
                 display: 'flex',

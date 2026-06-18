@@ -28,9 +28,9 @@ export default function Sidebar({ data }: SidebarProps) {
     <aside
       style={{
         width: 220,
-        background: 'rgba(255,255,255,0.6)',
-        backdropFilter: 'blur(22px) saturate(150%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(150%)',
+        background: 'var(--glass-bg)',
+        backdropFilter: 'blur(24px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(160%)',
         borderRight: '1px solid var(--glass-border)',
         display: 'flex',
         flexDirection: 'column',

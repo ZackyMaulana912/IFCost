@@ -146,7 +146,9 @@ export default function SummaryTab({ data }: SummaryTabProps) {
                 </Pie>
                 <Tooltip
                   formatter={(value) => [`${value} elemen`, '']}
-                  contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }}
+                  contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)' }}
+                  itemStyle={{ color: 'var(--text)' }}
+                  labelStyle={{ color: 'var(--text-2)' }}
                 />
                 <Legend
                   formatter={(value) => (
@@ -191,7 +193,9 @@ export default function SummaryTab({ data }: SummaryTabProps) {
                 />
                 <Tooltip
                   formatter={(v) => [`${formatNum(Number(v))} m²`, 'Luas']}
-                  contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }}
+                  contentStyle={{ borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)' }}
+                  itemStyle={{ color: 'var(--text)' }}
+                  labelStyle={{ color: 'var(--text-2)' }}
                 />
                 <Bar dataKey="area" fill="#3B82F6" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11, fill: 'var(--text-2)' }} />
               </BarChart>

@@ -25,7 +25,7 @@ export default function Navbar({ activeTab, onTabChange, onUploadClick, fileName
         borderRight: 'none',
         borderTop: 'none',
         borderBottom: '1px solid var(--glass-border)',
-        boxShadow: '0 4px 24px rgba(31,38,135,0.08)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
         display: 'flex',
         alignItems: 'stretch',
         padding: '0 24px',

@@ -241,19 +241,21 @@ export default function RABTab({ data }: RABTabProps) {
         {/* Total footer */}
         <div
           style={{
-            background: '#F0FDF4',
-            border: '1px solid #BBF7D0',
-            borderRadius: 12,
+            background: 'rgba(52,211,153,0.10)',
+            border: '1px solid rgba(52,211,153,0.30)',
+            borderRadius: 14,
             padding: '16px 20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
           }}
         >
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#15803D' }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#6EE7B7' }}>
             Estimasi Total Keseluruhan
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#16A34A' }}>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#34D399' }}>
             {formatRp(total)}
           </div>
         </div>
