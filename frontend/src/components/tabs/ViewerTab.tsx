@@ -9,12 +9,11 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
   const [activeTool, setActiveTool] = useState('home')
   const [showProps, setShowProps] = useState(false)
   const [viewerReady, setViewerReady] = useState(false)
-  const componentsRef = useRef<{
-    viewer: unknown
-    world: unknown
-    fragmentsManager: unknown
-    ifcLoader: unknown
-  } | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [loadingModel, setLoadingModel] = useState(false)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const componentsRef = useRef<any>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -29,27 +28,32 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
         const components = new OBC.Components()
         const worlds = components.get(OBC.Worlds)
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const world: any = worlds.create()
-
+        const world = worlds.create()
         world.scene = new OBC.SimpleScene(components)
         world.renderer = new OBCF.PostproductionRenderer(components, container)
         world.camera = new OBC.OrthoPerspectiveCamera(components)
 
         components.init()
 
-        world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10)
-        world.scene.setup()
+        world.camera.controls?.setLookAt(12, 6, 8, 0, 0, -10)
+        ;(world.scene as any).setup()
 
         const grids = components.get(OBC.Grids)
         grids.create(world)
 
         const fragmentsManager = components.get(OBC.FragmentsManager)
         const ifcLoader = components.get(OBC.IfcLoader)
+
         await ifcLoader.setup()
 
+        // Set WASM path ke CDN supaya bekerja di production (Vercel)
+        ifcLoader.settings.wasm = {
+          path: 'https://unpkg.com/web-ifc@0.0.77/',
+          absolute: true,
+        }
+
         if (!destroyed) {
-          componentsRef.current = { viewer: components, world, fragmentsManager, ifcLoader }
+          componentsRef.current = { components, world, fragmentsManager, ifcLoader }
           setViewerReady(true)
         }
       } catch (err) {
@@ -68,18 +72,41 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
     if (!ifcFile || !viewerReady || !componentsRef.current) return
 
     async function loadIFC() {
-      const { ifcLoader, fragmentsManager } = componentsRef.current!
-      const loader = ifcLoader as { load: (data: Uint8Array) => Promise<unknown> }
-      const manager = fragmentsManager as { groups: Map<string, unknown>; dispose: () => void }
+      const { world, fragmentsManager, ifcLoader } = componentsRef.current
 
-      manager.dispose()
+      setLoadingModel(true)
+      setLoadError(null)
 
-      const buffer = await ifcFile!.arrayBuffer()
-      const data = new Uint8Array(buffer)
-      await loader.load(data)
+      try {
+        // Hapus model lama dari scene
+        const existingModels = [...fragmentsManager.groups.values()]
+        for (const model of existingModels) {
+          world.scene.three.remove(model)
+        }
+        fragmentsManager.dispose()
+
+        const buffer = await ifcFile!.arrayBuffer()
+        const data = new Uint8Array(buffer)
+
+        // Load dan tambahkan model ke scene
+        const model = await ifcLoader.load(data)
+        world.scene.three.add(model)
+
+        // Fit camera ke bounding box model
+        try {
+          await world.camera.controls.fitToSphere(model, true)
+        } catch {
+          world.camera.controls.setLookAt(20, 15, 20, 0, 0, 0, true)
+        }
+      } catch (err) {
+        console.error('IFC load error:', err)
+        setLoadError('Gagal memuat model 3D. Cek console untuk detail.')
+      } finally {
+        setLoadingModel(false)
+      }
     }
 
-    loadIFC().catch(console.error)
+    loadIFC()
   }, [ifcFile, viewerReady])
 
   const tools = [
@@ -94,7 +121,7 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
       {/* Canvas container */}
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 
-      {/* Empty state */}
+      {/* Empty state — belum ada file */}
       {!ifcFile && (
         <div
           style={{
@@ -108,7 +135,6 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
             pointerEvents: 'none',
           }}
         >
-          {/* Dot grid background */}
           <div
             style={{
               position: 'absolute',
@@ -131,6 +157,60 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
               Klik "Unggah IFC" untuk memuat model 3D
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Loading model overlay */}
+      {loadingModel && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(13,17,23,0.75)',
+            backdropFilter: 'blur(4px)',
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid rgba(255,255,255,0.15)',
+              borderTopColor: '#3B82F6',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Memuat model 3D...</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
+      {/* Error state */}
+      {loadError && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 70,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#FEF2F2',
+            border: '1px solid #FECACA',
+            borderRadius: 8,
+            padding: '10px 16px',
+            fontSize: 13,
+            color: '#B91C1C',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <span className="material-icons-round" style={{ fontSize: 16 }}>error_outline</span>
+          {loadError}
         </div>
       )}
 
@@ -182,8 +262,54 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
         })}
       </div>
 
-      {/* Properties panel demo trigger */}
-      {ifcFile && (
+      {/* Properties panel */}
+      {showProps && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            right: 20,
+            width: 260,
+            background: 'rgba(255,255,255,0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.8)',
+            borderRadius: 12,
+            padding: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="material-icons-round" style={{ fontSize: 16, color: 'var(--blue)' }}>info</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Properti</span>
+            </div>
+            <button onClick={() => setShowProps(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+              <span className="material-icons-round" style={{ fontSize: 16, color: 'var(--text-2)' }}>close</span>
+            </button>
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>ENTITAS</div>
+            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>Dinding — IfcWallStandardCase</div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>GLOBALID</div>
+            <div style={{ fontSize: 11, color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', background: 'var(--surface-2)', padding: '4px 8px', borderRadius: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              2B$k_n98124uV$0I$Q$s$v
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[{ label: 'Volume', value: '1.47 m³' }, { label: 'Tinggi', value: '2.80 m' }].map((item) => (
+              <div key={item.label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 2 }}>{item.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--blue)' }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Hint bar */}
+      {ifcFile && !loadingModel && !loadError && (
         <button
           onClick={() => setShowProps(!showProps)}
           style={{
@@ -207,87 +333,6 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
           <span className="material-icons-round" style={{ fontSize: 14 }}>info</span>
           Klik elemen untuk melihat properti
         </button>
-      )}
-
-      {/* Properties panel */}
-      {showProps && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 20,
-            right: 20,
-            width: 260,
-            background: 'rgba(255,255,255,0.95)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.8)',
-            borderRadius: 12,
-            padding: 16,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="material-icons-round" style={{ fontSize: 16, color: 'var(--blue)' }}>info</span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Properti</span>
-            </div>
-            <button
-              onClick={() => setShowProps(false)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
-            >
-              <span className="material-icons-round" style={{ fontSize: 16, color: 'var(--text-2)' }}>close</span>
-            </button>
-          </div>
-
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-              ENTITAS
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>
-              Dinding — IfcWallStandardCase
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-              GLOBALID
-            </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: 'var(--text)',
-                fontFamily: 'JetBrains Mono, monospace',
-                background: 'var(--surface-2)',
-                padding: '4px 8px',
-                borderRadius: 6,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              2B$k_n98124uV$0I$Q$s$v
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[
-              { label: 'Volume', value: '1.47 m³' },
-              { label: 'Tinggi', value: '2.80 m' },
-            ].map((item) => (
-              <div
-                key={item.label}
-                style={{
-                  background: 'var(--surface-2)',
-                  borderRadius: 8,
-                  padding: '8px 10px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 2 }}>{item.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--blue)' }}>{item.value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
       )}
     </div>
   )

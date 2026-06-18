@@ -9,4 +9,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    exclude: ['@thatopen/components', '@thatopen/components-front'],
+  },
 })
