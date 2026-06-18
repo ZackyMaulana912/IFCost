@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #F8F9FA;
+    --surface: #FFFFFF;
+    --surface-2: #F1F3F5;
+    --green: #22C55E;
+    --yellow: #F59E0B;
+    --red: #EF4444;
+    --blue: #3B82F6;
+    --blue-dark: #1D4ED8;
+    --text: #111827;
+    --text-2: #6B7280;
+    --border: #E5E7EB;
+    --badge-green: #DCFCE7;
+    --badge-yellow: #FEF9C3;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-width: 1280px;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding: 0;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .btn-primary {
+    background-color: var(--blue);
+    color: white;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s;
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--blue-dark);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--text-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-ghost:hover {
+    background-color: var(--surface-2);
+    color: var(--text);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .badge-green {
+    background: var(--badge-green);
+    color: #15803D;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+  }
+
+  .badge-yellow {
+    background: var(--badge-yellow);
+    color: #92400E;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+}

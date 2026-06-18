@@ -1,0 +1,41 @@
+# Project-specific — file khusus Claude/AI, tidak perlu di-commit
+CLAUDE.md
+.claude/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.sw?
+*.suo
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+.env/
+pip-log.txt
+
+# Backend env
+backend/.env
+backend/.env.*
+
+# Jupyter
+.ipynb_checkpoints
+
+# OS
+Thumbs.db
