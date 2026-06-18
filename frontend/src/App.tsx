@@ -17,8 +17,10 @@ export default function App() {
 
   async function handleFile(file: File) {
     setIfcFile(file)
-    await analyze(file)
+    setActiveTab('viewer')
     setShowUpload(false)
+    await analyze(file)
+    setActiveTab('qto')
   }
 
   return (
@@ -87,12 +89,21 @@ export default function App() {
             </div>
           )}
 
-          {/* Tab content */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {activeTab === 'viewer' && <ViewerTab ifcFile={ifcFile} />}
-            {activeTab === 'qto' && <QTOTab data={data} />}
-            {activeTab === 'rab' && <RABTab data={data} />}
-            {activeTab === 'summary' && <SummaryTab data={data} />}
+          {/* Tab content — semua tab tetap mounted, hanya visibility yang berubah
+              supaya ViewerTab tidak re-init setiap ganti tab */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+            <div style={{ display: activeTab === 'viewer' ? 'flex' : 'none', flex: 1, flexDirection: 'column' }}>
+              <ViewerTab ifcFile={ifcFile} />
+            </div>
+            <div style={{ display: activeTab === 'qto' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
+              <QTOTab data={data} />
+            </div>
+            <div style={{ display: activeTab === 'rab' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
+              <RABTab data={data} />
+            </div>
+            <div style={{ display: activeTab === 'summary' ? 'flex' : 'none', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
+              <SummaryTab data={data} />
+            </div>
           </div>
         </main>
       </div>

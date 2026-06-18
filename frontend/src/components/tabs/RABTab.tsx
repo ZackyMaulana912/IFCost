@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AnalysisResponse, HargaSatuan, RABItem } from '../../types/ifc'
 import { calculateRAB, totalRAB, DEFAULT_HARGA } from '../../utils/rab'
 import { formatRp, formatRpShort } from '../../utils/format'
@@ -134,9 +134,15 @@ function RABRow({ item, depth = 0 }: { item: RABItem; depth?: number }) {
 
 export default function RABTab({ data }: RABTabProps) {
   const [harga, setHarga] = useState<HargaSatuan>(DEFAULT_HARGA)
-  const [rabItems, setRabItems] = useState<RABItem[]>(() =>
-    data ? calculateRAB(data.totals, DEFAULT_HARGA) : []
-  )
+  const [rabItems, setRabItems] = useState<RABItem[]>([])
+
+  // Recalculate dengan harga default setiap kali data dari backend berubah
+  useEffect(() => {
+    if (data) {
+      setHarga(DEFAULT_HARGA)
+      setRabItems(calculateRAB(data.totals, DEFAULT_HARGA))
+    }
+  }, [data])
 
   function handleHargaChange(field: keyof HargaSatuan, val: number) {
     setHarga((prev) => ({ ...prev, [field]: val }))
