@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import * as THREE from 'three'
 
 interface ViewerTabProps {
   ifcFile: File | null
@@ -78,29 +79,37 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
       setLoadError(null)
 
       try {
-        // Hapus model lama dari scene
-        const existingModels = [...fragmentsManager.groups.values()]
-        for (const model of existingModels) {
-          world.scene.three.remove(model)
+        // Hapus model lama dari scene (v3 API: core.models.list)
+        if (fragmentsManager.core?.models?.list) {
+          for (const model of fragmentsManager.core.models.list.values()) {
+            world.scene.three.remove(model)
+          }
         }
-        fragmentsManager.dispose()
 
         const buffer = await ifcFile!.arrayBuffer()
         const data = new Uint8Array(buffer)
 
-        // Load dan tambahkan model ke scene
+        // Load model — v3 return model object, add ke scene manual
         const model = await ifcLoader.load(data)
         world.scene.three.add(model)
 
-        // Fit camera ke bounding box model
+        // Fit camera ke model
         try {
-          await world.camera.controls.fitToSphere(model, true)
+          const bbox = new THREE.Box3().setFromObject(model)
+          const center = bbox.getCenter(new THREE.Vector3())
+          const size = bbox.getSize(new THREE.Vector3())
+          const maxDim = Math.max(size.x, size.y, size.z)
+          world.camera.controls?.setLookAt(
+            center.x + maxDim, center.y + maxDim * 0.5, center.z + maxDim,
+            center.x, center.y, center.z,
+            true
+          )
         } catch {
-          world.camera.controls.setLookAt(20, 15, 20, 0, 0, 0, true)
+          world.camera.controls?.setLookAt(20, 15, 20, 0, 0, 0, true)
         }
       } catch (err) {
         console.error('IFC load error:', err)
-        setLoadError('Gagal memuat model 3D. Cek console untuk detail.')
+        setLoadError(`Gagal memuat model 3D: ${err instanceof Error ? err.message : String(err)}`)
       } finally {
         setLoadingModel(false)
       }
