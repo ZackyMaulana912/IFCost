@@ -24,7 +24,7 @@ jobs:
           git config --global user.name "GitHub Action"
 
           # Clone HF Space
-          git clone https://Zacky912:$HF_TOKEN@huggingface.co/spaces/Zacky912/ifcost_backend hf_space
+          git clone https://Zacky912:$HF_TOKEN@huggingface.co/spaces/Zacky912/ifcost_web hf_space
 
           # Copy file backend ke HF Space (overwrite)
           cp backend/main.py hf_space/
@@ -32,6 +32,7 @@ jobs:
           cp backend/rab_calculator.py hf_space/
           cp backend/requirements.txt hf_space/
           cp backend/Dockerfile hf_space/
+          cp backend/README.md hf_space/
 
           # Push ke HF
           cd hf_space
