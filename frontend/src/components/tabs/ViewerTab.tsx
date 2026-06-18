@@ -48,6 +48,11 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
         const workerUrl = await OBC.FragmentsManager.getWorker()
         await fragmentsManager.init(workerUrl)
 
+        // v3: fragments butuh update eksplisit agar ter-render & culling
+        // jalan saat kamera bergerak. Tanpa ini model tidak akan tampil.
+        world.camera.controls?.addEventListener('rest', () => fragmentsManager.core.update(true))
+        world.camera.controls?.addEventListener('update', () => fragmentsManager.core.update())
+
         const ifcLoader = components.get(OBC.IfcLoader)
 
         // Set WASM path ke file lokal di /public supaya tidak depend CDN
@@ -85,34 +90,38 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
       setLoadError(null)
 
       try {
-        // Hapus model lama dari scene (v3 API: core.models.list)
-        if (fragmentsManager.core?.models?.list) {
-          for (const model of fragmentsManager.core.models.list.values()) {
-            world.scene.three.remove(model)
-          }
+        // Hapus model lama dari scene (v3: fragmentsManager.list -> FragmentsModel)
+        for (const [id, old] of fragmentsManager.list) {
+          world.scene.three.remove(old.object)
+          await fragmentsManager.core.disposeModel(id)
         }
 
         const buffer = await ifcFile!.arrayBuffer()
         const data = new Uint8Array(buffer)
 
-        // Load model — v3 return model object, add ke scene manual
-        const model = await ifcLoader.load(data)
-        world.scene.three.add(model)
+        // v3: ifcLoader.load() return FragmentsModel (BUKAN Object3D).
+        // Yang ditambahkan ke scene adalah model.object, lalu wajib update().
+        const model = await ifcLoader.load(data, true, ifcFile!.name)
+        model.useCamera(world.camera.three)
+        world.scene.three.add(model.object)
+        await fragmentsManager.core.update(true)
 
-        // Fit camera ke model
+        // Fit camera ke model — pakai model.box (THREE.Box3 bawaan v3)
         try {
-          const bbox = new THREE.Box3().setFromObject(model)
+          const bbox = model.box
           const center = bbox.getCenter(new THREE.Vector3())
           const size = bbox.getSize(new THREE.Vector3())
-          const maxDim = Math.max(size.x, size.y, size.z)
-          world.camera.controls?.setLookAt(
-            center.x + maxDim, center.y + maxDim * 0.5, center.z + maxDim,
+          const maxDim = Math.max(size.x, size.y, size.z) || 10
+          await world.camera.controls?.setLookAt(
+            center.x + maxDim, center.y + maxDim * 0.8, center.z + maxDim,
             center.x, center.y, center.z,
             true
           )
         } catch {
-          world.camera.controls?.setLookAt(20, 15, 20, 0, 0, 0, true)
+          await world.camera.controls?.setLookAt(20, 15, 20, 0, 0, 0, true)
         }
+        // render ulang setelah kamera menetap
+        await fragmentsManager.core.update(true)
       } catch (err) {
         console.error('IFC load error:', err)
         setLoadError(`Gagal memuat model 3D: ${err instanceof Error ? err.message : String(err)}`)

@@ -20,22 +20,68 @@ def get_pset_value(element, pset_name: str, prop_name: str) -> Any:
         return None
 
 
-def find_qto_value(element, prop_name: str) -> Any:
-    """Cari nilai QTO dari semua pset yang namanya mengandung 'qto' atau 'quantity'.
-    Menangkap QTO_CLASSIFICATION pada file Smiley-West (IFC2X3, ArchiCAD)."""
+def find_qto_value(element, prop_names) -> Any:
+    """Cari nilai kuantitas dari pset/qto element.
+
+    `prop_names` bisa berupa string tunggal atau list nama kandidat (dicoba
+    berurutan, ambil yang pertama ketemu).
+
+    Menangani dua format file berbeda:
+    - Smiley-West (IFC2X3, ArchiCAD): kuantitas di IfcElementQuantity dengan
+      NAMA PSET = None. `None.lower()` dulu bikin crash → seluruh nilai jadi None.
+    - Duplex (IFC2X3, Revit): TIDAK ada IfcElementQuantity sama sekali; kuantitas
+      ada di PSet_Revit_Dimensions (Length, Area, Volume, Thickness, ...).
+
+    Strategi: utamakan pset yang bernama qto/quantity ATAU tanpa nama (None,
+    ciri khas IfcElementQuantity ArchiCAD), lalu fallback ke pset apa pun.
+    """
+    if isinstance(prop_names, str):
+        prop_names = [prop_names]
+
     try:
-        psets = ifcopenshell.util.element.get_psets(element, qtos_only=False)
-        for pset_name, props in psets.items():
-            if "qto" in pset_name.lower() or "quantity" in pset_name.lower():
-                if prop_name in props:
-                    return props[prop_name]
-        # Fallback: cari tanpa filter
-        for pset_name, props in psets.items():
-            if prop_name in props:
-                return props[prop_name]
+        psets = ifcopenshell.util.element.get_psets(element)
     except Exception:
-        pass
+        return None
+
+    def is_qto_pset(name) -> bool:
+        if name is None:
+            return True  # IfcElementQuantity tanpa nama (Smiley-West)
+        n = name.lower()
+        return "qto" in n or "quantity" in n
+
+    # Pass 1: prioritaskan pset kuantitas, urut sesuai prioritas nama properti
+    for prop in prop_names:
+        for pset_name, props in psets.items():
+            if is_qto_pset(pset_name) and props.get(prop) is not None:
+                return props[prop]
+
+    # Pass 2: fallback ke pset apa pun (mis. PSet_Revit_Dimensions pada Duplex)
+    for prop in prop_names:
+        for props in psets.values():
+            if props.get(prop) is not None:
+                return props[prop]
+
     return None
+
+
+# Kandidat nama properti per field — mencakup format ArchiCAD (NetVolume,
+# NetFootprintArea) dan Revit (Volume, Area, Length, Thickness).
+WALL_AREA_KEYS = ["NetSideArea", "NetSideAreaLeft", "GrossSideArea", "Area", "NetFootprintArea"]
+WALL_VOLUME_KEYS = ["NetVolume", "GrossVolume", "Volume"]
+WALL_WIDTH_KEYS = ["Width", "Thickness"]
+SLAB_GROSS_AREA_KEYS = ["GrossArea", "GrossFloorArea", "Area", "NetFootprintArea"]
+SLAB_NET_AREA_KEYS = ["NetArea", "NetFloorArea", "NetFootprintArea", "Area", "GrossArea"]
+SLAB_VOLUME_KEYS = ["NetVolume", "GrossVolume", "Volume"]
+COLUMN_CSA_KEYS = ["CrossSectionArea", "NetFootprintArea"]
+COLUMN_VOLUME_KEYS = ["NetVolume", "GrossVolume", "Volume"]
+BEAM_LENGTH_KEYS = ["Length", "Span"]
+BEAM_CSA_KEYS = ["CrossSectionArea", "NetFootprintArea"]
+BEAM_VOLUME_KEYS = ["NetVolume", "GrossVolume", "Volume"]
+SPACE_AREA_KEYS = [
+    "NetFloorArea", "GrossFloorArea", "FloorArea", "NetArea", "GrossArea",
+    "NetFootprintArea", "Area", "GSA BIM Area",
+]
+SPACE_HEIGHT_KEYS = ["Height", "NetHeight", "FinishCeilingHeight", "Unbounded Height"]
 
 
 def get_wall_types(model) -> list:
@@ -55,18 +101,18 @@ def extract_walls(model) -> list[dict]:
         try:
             length = safe_round(find_qto_value(wall, "Length"))
             height = safe_round(find_qto_value(wall, "Height"))
-            net_side_area = safe_round(find_qto_value(wall, "NetSideArea"))
-            net_volume = safe_round(find_qto_value(wall, "NetVolume"))
-            gross_volume = safe_round(find_qto_value(wall, "GrossVolume"))
+            net_side_area = safe_round(find_qto_value(wall, WALL_AREA_KEYS))
+            net_volume = safe_round(find_qto_value(wall, WALL_VOLUME_KEYS))
+            gross_volume = safe_round(find_qto_value(wall, ["GrossVolume", "NetVolume", "Volume"]))
 
             # Fallback dari geometri jika QTO kosong
             if net_volume is None and length and height:
-                thickness = safe_round(find_qto_value(wall, "Width")) or 0.2
+                thickness = safe_round(find_qto_value(wall, WALL_WIDTH_KEYS)) or 0.2
                 net_volume = safe_round((length or 0) * (height or 0) * thickness)
 
             results.append({
                 "GlobalId": wall.GlobalId,
-                "Name": wall.Name or "",
+                "Name": wall.Name or getattr(wall, "ObjectType", None) or "",
                 "Type": wall.is_a(),
                 "Length": length,
                 "Height": height,
@@ -83,9 +129,9 @@ def extract_slabs(model) -> list[dict]:
     results = []
     for slab in model.by_type("IfcSlab"):
         try:
-            gross_area = safe_round(find_qto_value(slab, "GrossArea"))
-            net_area = safe_round(find_qto_value(slab, "NetArea"))
-            volume = safe_round(find_qto_value(slab, "NetVolume")) or safe_round(find_qto_value(slab, "GrossVolume"))
+            gross_area = safe_round(find_qto_value(slab, SLAB_GROSS_AREA_KEYS))
+            net_area = safe_round(find_qto_value(slab, SLAB_NET_AREA_KEYS))
+            volume = safe_round(find_qto_value(slab, SLAB_VOLUME_KEYS))
 
             predefined = getattr(slab, "PredefinedType", None)
             if predefined and hasattr(predefined, "is_a"):
@@ -109,15 +155,15 @@ def extract_columns(model) -> list[dict]:
     for col in model.by_type("IfcColumn"):
         try:
             length = safe_round(find_qto_value(col, "Length"))
-            cross_section = safe_round(find_qto_value(col, "CrossSectionArea"))
-            volume = safe_round(find_qto_value(col, "NetVolume")) or safe_round(find_qto_value(col, "GrossVolume"))
+            cross_section = safe_round(find_qto_value(col, COLUMN_CSA_KEYS))
+            volume = safe_round(find_qto_value(col, COLUMN_VOLUME_KEYS))
 
             if volume is None and length and cross_section:
                 volume = safe_round(length * cross_section)
 
             results.append({
                 "GlobalId": col.GlobalId,
-                "Name": col.Name or "",
+                "Name": col.Name or getattr(col, "ObjectType", None) or "",
                 "Length": length,
                 "CrossSectionArea": cross_section,
                 "Volume": volume,
@@ -131,16 +177,16 @@ def extract_beams(model) -> list[dict]:
     results = []
     for beam in model.by_type("IfcBeam"):
         try:
-            length = safe_round(find_qto_value(beam, "Length"))
-            cross_section = safe_round(find_qto_value(beam, "CrossSectionArea"))
-            volume = safe_round(find_qto_value(beam, "NetVolume")) or safe_round(find_qto_value(beam, "GrossVolume"))
+            length = safe_round(find_qto_value(beam, BEAM_LENGTH_KEYS))
+            cross_section = safe_round(find_qto_value(beam, BEAM_CSA_KEYS))
+            volume = safe_round(find_qto_value(beam, BEAM_VOLUME_KEYS))
 
             if volume is None and length and cross_section:
                 volume = safe_round(length * cross_section)
 
             results.append({
                 "GlobalId": beam.GlobalId,
-                "Name": beam.Name or "",
+                "Name": beam.Name or getattr(beam, "ObjectType", None) or "",
                 "Length": length,
                 "CrossSectionArea": cross_section,
                 "Volume": volume,
@@ -154,21 +200,10 @@ def extract_spaces(model) -> list[dict]:
     results = []
     for space in model.by_type("IfcSpace"):
         try:
-            # 5 lapis fallback untuk floor area
-            floor_area = (
-                find_qto_value(space, "NetFloorArea")
-                or find_qto_value(space, "GrossFloorArea")
-                or find_qto_value(space, "FloorArea")
-                or find_qto_value(space, "NetArea")
-                or find_qto_value(space, "GrossArea")
-            )
-            height = (
-                find_qto_value(space, "Height")
-                or find_qto_value(space, "NetHeight")
-                or find_qto_value(space, "FinishCeilingHeight")
-            )
+            floor_area = find_qto_value(space, SPACE_AREA_KEYS)
+            height = find_qto_value(space, SPACE_HEIGHT_KEYS)
 
-            room_name = space.Name or space.LongName or space.GlobalId
+            room_name = space.LongName or space.Name or space.GlobalId
 
             results.append({
                 "GlobalId": space.GlobalId,
