@@ -42,15 +42,15 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
         grids.create(world)
 
         const fragmentsManager = components.get(OBC.FragmentsManager)
+
+        // FragmentsManager v3 harus di-init dengan worker sebelum load IFC
+        const workerUrl = await OBC.FragmentsManager.getWorker()
+        await fragmentsManager.init(workerUrl)
+
         const ifcLoader = components.get(OBC.IfcLoader)
 
-        await ifcLoader.setup()
-
-        // Set WASM path ke CDN supaya bekerja di production (Vercel)
-        ifcLoader.settings.wasm = {
-          path: 'https://unpkg.com/web-ifc@0.0.77/',
-          absolute: true,
-        }
+        // autoSetWasm akan fetch versi web-ifc dari unpkg secara otomatis
+        await ifcLoader.setup({ autoSetWasm: true })
 
         if (!destroyed) {
           componentsRef.current = { components, world, fragmentsManager, ifcLoader }
