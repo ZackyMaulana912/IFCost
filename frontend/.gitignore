@@ -28,6 +28,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# WASM — di-generate saat build oleh copy-wasm.cjs
+public/*.wasm
+
 # Playwright
 playwright-report/
 test-results/

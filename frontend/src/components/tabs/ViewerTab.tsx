@@ -50,8 +50,14 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
 
         const ifcLoader = components.get(OBC.IfcLoader)
 
-        // autoSetWasm akan fetch versi web-ifc dari unpkg secara otomatis
-        await ifcLoader.setup({ autoSetWasm: true })
+        // Set WASM path ke file lokal di /public supaya tidak depend CDN
+        await ifcLoader.setup({
+          autoSetWasm: false,
+          wasm: {
+            path: '/',
+            absolute: false,
+          },
+        })
 
         if (!destroyed) {
           componentsRef.current = { components, world, fragmentsManager, ifcLoader }
