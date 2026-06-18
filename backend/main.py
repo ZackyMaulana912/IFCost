@@ -15,7 +15,7 @@ app = FastAPI(title="IFCost API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://ifcost.vercel.app",
+        "https://ifcost-web.vercel.app",
         "http://localhost:5173",
         "http://localhost:4173",
     ],
