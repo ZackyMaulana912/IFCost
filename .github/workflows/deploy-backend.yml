@@ -1,0 +1,40 @@
+name: Deploy Backend to HuggingFace Spaces
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Push backend to HuggingFace Spaces
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+
+          # Clone HF Space
+          git clone https://Zacky912:$HF_TOKEN@huggingface.co/spaces/Zacky912/ifcost_backend hf_space
+
+          # Copy file backend ke HF Space (overwrite)
+          cp backend/main.py hf_space/
+          cp backend/ifc_parser.py hf_space/
+          cp backend/rab_calculator.py hf_space/
+          cp backend/requirements.txt hf_space/
+          cp backend/Dockerfile hf_space/
+
+          # Push ke HF
+          cd hf_space
+          git add .
+          git diff --cached --quiet || git commit -m "sync: backend from GitHub $(date +'%Y-%m-%d %H:%M')"
+          git push
