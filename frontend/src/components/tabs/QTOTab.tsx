@@ -29,7 +29,7 @@ function SortIcon({ direction }: { direction: 'asc' | 'desc' | false }) {
   if (!direction)
     return <span className="material-icons-round" style={{ fontSize: 12, color: 'var(--border)' }}>unfold_more</span>
   return (
-    <span className="material-icons-round" style={{ fontSize: 12, color: 'var(--blue)' }}>
+    <span className="material-icons-round" style={{ fontSize: 12, color: 'var(--primary)' }}>
       {direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}
     </span>
   )
@@ -272,7 +272,7 @@ export default function QTOTab({ data }: QTOTabProps) {
       count: walls.length,
       color: '#22C55E',
       bgColor: '#DCFCE7',
-      icon: 'wall',
+      icon: 'view_day',
       defaultOpen: true,
       content: (
         <DataTable

@@ -17,10 +17,15 @@ const tabs: { id: TabId; label: string; icon: string }[] = [
 export default function Navbar({ activeTab, onTabChange, onUploadClick, fileName }: NavbarProps) {
   return (
     <nav
+      className="glass"
       style={{
         height: 56,
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
+        borderRadius: 0,
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderTop: 'none',
+        borderBottom: '1px solid var(--glass-border)',
+        boxShadow: '0 4px 24px rgba(31,38,135,0.08)',
         display: 'flex',
         alignItems: 'stretch',
         padding: '0 24px',
@@ -42,17 +47,18 @@ export default function Navbar({ activeTab, onTabChange, onUploadClick, fileName
       >
         <div
           style={{
-            width: 28,
-            height: 28,
-            background: 'var(--blue)',
-            borderRadius: 6,
+            width: 30,
+            height: 30,
+            background: 'linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%)',
+            borderRadius: 8,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(109,40,217,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
           }}
         >
-          <span className="material-icons-round" style={{ color: 'white', fontSize: 16 }}>
-            corporate_fare
+          <span className="material-icons-round" style={{ color: 'white', fontSize: 17 }}>
+            apartment
           </span>
         </div>
         <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>
@@ -75,10 +81,10 @@ export default function Navbar({ activeTab, onTabChange, onUploadClick, fileName
                 padding: '0 14px',
                 fontSize: 14,
                 fontWeight: 500,
-                color: active ? 'var(--blue)' : 'var(--text-2)',
+                color: active ? 'var(--primary)' : 'var(--text-2)',
                 background: 'none',
                 border: 'none',
-                borderBottom: active ? '2px solid var(--blue)' : '2px solid transparent',
+                borderBottom: active ? '2px solid var(--primary)' : '2px solid transparent',
                 cursor: 'pointer',
                 transition: 'color 0.15s, border-color 0.15s',
                 borderRadius: 0,

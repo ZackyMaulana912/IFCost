@@ -6,7 +6,7 @@ interface SidebarProps {
 }
 
 const layers: { label: string; icon: string; keys: string[]; color: string }[] = [
-  { label: 'Dinding', icon: 'square', keys: ['IfcWall', 'IfcWallStandardCase'], color: '#22C55E' },
+  { label: 'Dinding', icon: 'view_day', keys: ['IfcWall', 'IfcWallStandardCase'], color: '#22C55E' },
   { label: 'Lantai', icon: 'layers', keys: ['IfcSlab'], color: '#D97706' },
   { label: 'Kolom', icon: 'view_column', keys: ['IfcColumn'], color: '#8B5CF6' },
   { label: 'Balok', icon: 'horizontal_rule', keys: ['IfcBeam'], color: '#EF4444' },
@@ -27,9 +27,11 @@ export default function Sidebar({ data }: SidebarProps) {
   return (
     <aside
       style={{
-        width: 200,
-        background: 'var(--surface)',
-        borderRight: '1px solid var(--border)',
+        width: 220,
+        background: 'rgba(255,255,255,0.6)',
+        backdropFilter: 'blur(22px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(150%)',
+        borderRight: '1px solid var(--glass-border)',
         display: 'flex',
         flexDirection: 'column',
         flexShrink: 0,
@@ -37,7 +39,7 @@ export default function Sidebar({ data }: SidebarProps) {
         overflow: 'hidden',
       }}
     >
-      <div style={{ padding: '16px 12px 8px' }}>
+      <div style={{ padding: '18px 14px 10px' }}>
         <button
           onClick={() => setExpanded(!expanded)}
           style={{
@@ -47,21 +49,21 @@ export default function Sidebar({ data }: SidebarProps) {
             justifyContent: 'space-between',
             background: 'none',
             border: 'none',
-            padding: '4px 8px',
-            borderRadius: 6,
+            padding: '8px 10px',
+            borderRadius: 10,
             cursor: 'pointer',
           }}
         >
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>Lapisan</div>
-            <div style={{ fontSize: 11, color: 'var(--text-2)' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Lapisan</div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
               {data ? `${jenisAda} Jenis Elemen` : 'Belum ada model'}
             </div>
           </div>
           <span
             className="material-icons-round"
             style={{
-              fontSize: 18,
+              fontSize: 22,
               color: 'var(--text-2)',
               transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)',
               transition: 'transform 0.2s',
@@ -72,7 +74,7 @@ export default function Sidebar({ data }: SidebarProps) {
         </button>
 
         {expanded && (
-          <div style={{ marginTop: 4 }}>
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {rows.map((row) => (
               <div
                 key={row.label}
@@ -80,20 +82,32 @@ export default function Sidebar({ data }: SidebarProps) {
                   width: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
-                  padding: '7px 8px',
-                  borderRadius: 6,
+                  gap: 12,
+                  padding: '11px 12px',
+                  borderRadius: 10,
                   opacity: row.count > 0 ? 1 : 0.4,
                 }}
               >
                 <span
                   className="material-icons-round"
-                  style={{ fontSize: 15, color: row.count > 0 ? row.color : 'var(--text-2)' }}
+                  style={{ fontSize: 20, color: row.count > 0 ? row.color : 'var(--text-2)' }}
                 >
                   {row.icon}
                 </span>
-                <span style={{ fontSize: 13, color: 'var(--text)', flex: 1 }}>{row.label}</span>
-                <span style={{ fontSize: 12, color: 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)', flex: 1 }}>{row.label}</span>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: row.count > 0 ? 'var(--text)' : 'var(--text-2)',
+                    background: row.count > 0 ? 'var(--surface-2)' : 'transparent',
+                    borderRadius: 999,
+                    padding: '2px 9px',
+                    minWidth: 26,
+                    textAlign: 'center',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
                   {data ? row.count : '—'}
                 </span>
               </div>

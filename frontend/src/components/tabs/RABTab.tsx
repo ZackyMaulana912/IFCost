@@ -40,7 +40,7 @@ function HargaInput({
           transition: 'border-color 0.15s',
         }}
         onFocusCapture={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue)'
+          (e.currentTarget as HTMLElement).style.borderColor = 'var(--primary)'
         }}
         onBlurCapture={(e) => {
           (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'
@@ -106,7 +106,7 @@ function RABRow({ item, depth = 0 }: { item: RABItem; depth?: number }) {
         <td style={{ padding: '10px 16px', fontSize: 14, color: 'var(--text)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
           {item.kebutuhan}
         </td>
-        <td style={{ padding: '10px 16px', fontSize: 14, color: 'var(--blue)', fontWeight: 500, borderBottom: '1px solid var(--border)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+        <td style={{ padding: '10px 16px', fontSize: 14, color: 'var(--primary)', fontWeight: 500, borderBottom: '1px solid var(--border)', textAlign: 'right', whiteSpace: 'nowrap' }}>
           {formatRp(item.harga_satuan)}
         </td>
         <td style={{ padding: '10px 16px', fontSize: 14, fontWeight: depth === 0 ? 600 : 400, color: 'var(--text)', borderBottom: '1px solid var(--border)', textAlign: 'right', whiteSpace: 'nowrap' }}>

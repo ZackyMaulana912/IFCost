@@ -58,14 +58,14 @@ export default function UploadZone({ onFile, loading, onClose }: UploadZoneProps
               style={{
                 width: 36,
                 height: 36,
-                background: 'rgba(59,130,246,0.1)',
+                background: 'var(--primary-soft)',
                 borderRadius: 8,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <span className="material-icons-round" style={{ color: 'var(--blue)', fontSize: 20 }}>
+              <span className="material-icons-round" style={{ color: 'var(--primary)', fontSize: 20 }}>
                 upload_file
               </span>
             </div>
@@ -99,12 +99,12 @@ export default function UploadZone({ onFile, loading, onClose }: UploadZoneProps
           onDrop={handleDrop}
           onClick={() => !loading && inputRef.current?.click()}
           style={{
-            border: `2px dashed ${dragging ? 'var(--blue)' : 'var(--border)'}`,
+            border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`,
             borderRadius: 12,
             padding: '40px 24px',
             textAlign: 'center',
             cursor: loading ? 'not-allowed' : 'pointer',
-            background: dragging ? 'rgba(59,130,246,0.04)' : 'var(--surface-2)',
+            background: dragging ? 'var(--primary-soft)' : 'var(--surface-2)',
             transition: 'all 0.15s',
           }}
         >
@@ -115,7 +115,7 @@ export default function UploadZone({ onFile, loading, onClose }: UploadZoneProps
                   width: 40,
                   height: 40,
                   border: '3px solid var(--border)',
-                  borderTopColor: 'var(--blue)',
+                  borderTopColor: 'var(--primary)',
                   borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite',
                   margin: '0 auto 16px',
