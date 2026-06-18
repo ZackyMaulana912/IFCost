@@ -1,7 +1,7 @@
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import type { AnalysisResponse } from '../../types/ifc'
 import { calculateRAB, totalRAB, DEFAULT_HARGA } from '../../utils/rab'
-import { formatNum, formatInt, formatRpShort } from '../../utils/format'
+import { formatNum, formatInt, formatRp } from '../../utils/format'
 import MetricCard from '../ui/MetricCard'
 
 interface SummaryTabProps {
@@ -70,10 +70,10 @@ export default function SummaryTab({ data }: SummaryTabProps) {
   // Table rows
   const tableRows = [
     { tipe: 'Dinding', jumlah: wallCount, volume: totals.wall_volume, dot: '#22C55E' },
-    { tipe: 'Pintu', jumlah: doorCount, volume: 45, dot: '#3B82F6' },
+    { tipe: 'Pintu', jumlah: doorCount, volume: 0, dot: '#3B82F6' },
     { tipe: 'Lantai', jumlah: slabCount, volume: totals.slab_area * 0.12, dot: '#D97706' },
     { tipe: 'Kolom', jumlah: columnCount, volume: totals.column_volume, dot: '#8B5CF6' },
-    { tipe: 'Jendela', jumlah: windowCount, volume: 22, dot: '#6B7280' },
+    { tipe: 'Jendela', jumlah: windowCount, volume: 0, dot: '#6B7280' },
     { tipe: 'Balok', jumlah: beamCount, volume: totals.beam_volume, dot: '#EF4444' },
   ].filter((r) => r.jumlah > 0)
 
@@ -114,7 +114,7 @@ export default function SummaryTab({ data }: SummaryTabProps) {
         />
         <MetricCard
           label="Estimasi RAB"
-          value={formatRpShort(totalEstimasi)}
+          value={formatRp(totalEstimasi)}
           icon="account_balance_wallet"
           iconColor="#EF4444"
           iconBg="#FEE2E2"

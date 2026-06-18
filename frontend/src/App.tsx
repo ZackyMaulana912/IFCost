@@ -33,7 +33,7 @@ export default function App() {
       />
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <Sidebar data={data} />
 
         <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
           {/* Error banner */}

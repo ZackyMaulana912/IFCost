@@ -123,23 +123,6 @@ export default function Navbar({ activeTab, onTabChange, onUploadClick, fileName
           </span>
           Unggah IFC
         </button>
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            border: '1.5px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            background: 'var(--surface-2)',
-          }}
-        >
-          <span className="material-icons-round" style={{ fontSize: 18, color: 'var(--text-2)' }}>
-            account_circle
-          </span>
-        </div>
       </div>
     </nav>
   )

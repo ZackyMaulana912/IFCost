@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { AnalysisResponse, HargaSatuan, RABItem } from '../../types/ifc'
 import { calculateRAB, totalRAB, DEFAULT_HARGA } from '../../utils/rab'
-import { formatRp, formatRpShort } from '../../utils/format'
+import { formatRp } from '../../utils/format'
 
 interface RABTabProps {
   data: AnalysisResponse | null
@@ -253,8 +253,8 @@ export default function RABTab({ data }: RABTabProps) {
           <div style={{ fontSize: 16, fontWeight: 600, color: '#15803D' }}>
             Estimasi Total Keseluruhan
           </div>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#22C55E' }}>
-            {formatRpShort(total)}
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#16A34A' }}>
+            {formatRp(total)}
           </div>
         </div>
       </div>

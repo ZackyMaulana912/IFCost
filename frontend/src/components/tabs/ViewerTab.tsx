@@ -7,14 +7,13 @@ interface ViewerTabProps {
 
 export default function ViewerTab({ ifcFile }: ViewerTabProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [activeTool, setActiveTool] = useState('home')
-  const [showProps, setShowProps] = useState(false)
   const [viewerReady, setViewerReady] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loadingModel, setLoadingModel] = useState(false)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const componentsRef = useRef<any>(null)
+  const lastBoxRef = useRef<THREE.Box3 | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -109,18 +108,11 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
         // Fit camera ke model — pakai model.box (THREE.Box3 bawaan v3)
         try {
           const bbox = model.box
-          const center = bbox.getCenter(new THREE.Vector3())
-          const size = bbox.getSize(new THREE.Vector3())
-          const maxDim = Math.max(size.x, size.y, size.z) || 10
-          await world.camera.controls?.setLookAt(
-            center.x + maxDim, center.y + maxDim * 0.8, center.z + maxDim,
-            center.x, center.y, center.z,
-            true
-          )
+          lastBoxRef.current = bbox
+          fitToBox(bbox)
         } catch {
           await world.camera.controls?.setLookAt(20, 15, 20, 0, 0, 0, true)
         }
-        // render ulang setelah kamera menetap
         await fragmentsManager.core.update(true)
       } catch (err) {
         console.error('IFC load error:', err)
@@ -133,15 +125,32 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
     loadIFC()
   }, [ifcFile, viewerReady])
 
-  const tools = [
-    { id: 'home', icon: 'home', label: 'Reset tampilan' },
-    { id: 'grid', icon: 'grid_on', label: 'Grid' },
-    { id: 'rotate', icon: '3d_rotation', label: 'Rotasi' },
-    { id: 'section', icon: 'content_cut', label: 'Potongan' },
-  ]
+  function fitToBox(bbox: THREE.Box3) {
+    const refs = componentsRef.current
+    if (!refs) return
+    const center = bbox.getCenter(new THREE.Vector3())
+    const size = bbox.getSize(new THREE.Vector3())
+    const maxDim = Math.max(size.x, size.y, size.z) || 10
+    refs.world.camera.controls?.setLookAt(
+      center.x + maxDim, center.y + maxDim * 0.8, center.z + maxDim,
+      center.x, center.y, center.z,
+      true,
+    )
+  }
+
+  function handleReset() {
+    const refs = componentsRef.current
+    if (!refs) return
+    if (lastBoxRef.current) {
+      fitToBox(lastBoxRef.current)
+    } else {
+      refs.world.camera.controls?.setLookAt(12, 6, 8, 0, 0, -10, true)
+    }
+    refs.fragmentsManager.core.update(true)
+  }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1117' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#1E293B' }}>
       {/* Canvas container */}
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 
@@ -155,7 +164,7 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'radial-gradient(circle at 50% 50%, #1a2035 0%, #0D1117 70%)',
+            background: 'radial-gradient(circle at 50% 45%, #334155 0%, #1E293B 70%)',
             pointerEvents: 'none',
           }}
         >
@@ -163,21 +172,21 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
             style={{
               position: 'absolute',
               inset: 0,
-              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)',
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
               backgroundSize: '32px 32px',
             }}
           />
           <div style={{ position: 'relative', textAlign: 'center' }}>
             <span
               className="material-icons-round"
-              style={{ fontSize: 64, color: 'rgba(255,255,255,0.12)', marginBottom: 16, display: 'block' }}
+              style={{ fontSize: 64, color: 'rgba(255,255,255,0.18)', marginBottom: 16, display: 'block' }}
             >
               view_in_ar
             </span>
-            <div style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>
               Belum ada model IFC
             </div>
-            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.2)' }}>
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)' }}>
               Klik "Unggah IFC" untuk memuat model 3D
             </div>
           </div>
@@ -194,7 +203,7 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(13,17,23,0.75)',
+            background: 'rgba(30,41,59,0.75)',
             backdropFilter: 'blur(4px)',
             gap: 12,
           }}
@@ -238,124 +247,33 @@ export default function ViewerTab({ ifcFile }: ViewerTabProps) {
         </div>
       )}
 
-      {/* Floating toolbar */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: 4,
-          background: 'rgba(255,255,255,0.12)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.2)',
-          borderRadius: 999,
-          padding: '6px 10px',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-        }}
-      >
-        {tools.map((tool) => {
-          const isActive = activeTool === tool.id
-          return (
-            <button
-              key={tool.id}
-              title={tool.label}
-              onClick={() => setActiveTool(tool.id)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: isActive ? 'rgba(59,130,246,0.7)' : 'transparent',
-                transition: 'background 0.15s',
-              }}
-            >
-              <span
-                className="material-icons-round"
-                style={{ fontSize: 18, color: isActive ? 'white' : 'rgba(255,255,255,0.7)' }}
-              >
-                {tool.icon}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Properties panel */}
-      {showProps && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 20,
-            right: 20,
-            width: 260,
-            background: 'rgba(255,255,255,0.95)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.8)',
-            borderRadius: 12,
-            padding: 16,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="material-icons-round" style={{ fontSize: 16, color: 'var(--blue)' }}>info</span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Properti</span>
-            </div>
-            <button onClick={() => setShowProps(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-              <span className="material-icons-round" style={{ fontSize: 16, color: 'var(--text-2)' }}>close</span>
-            </button>
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>ENTITAS</div>
-            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>Dinding — IfcWallStandardCase</div>
-          </div>
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 10, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>GLOBALID</div>
-            <div style={{ fontSize: 11, color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', background: 'var(--surface-2)', padding: '4px 8px', borderRadius: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              2B$k_n98124uV$0I$Q$s$v
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[{ label: 'Volume', value: '1.47 m³' }, { label: 'Tinggi', value: '2.80 m' }].map((item) => (
-              <div key={item.label} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '8px 10px', textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-2)', marginBottom: 2 }}>{item.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--blue)' }}>{item.value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Hint bar */}
+      {/* Reset view button — satu kontrol yang benar-benar berfungsi */}
       {ifcFile && !loadingModel && !loadError && (
         <button
-          onClick={() => setShowProps(!showProps)}
+          onClick={handleReset}
+          title="Reset tampilan ke model"
           style={{
             position: 'absolute',
-            bottom: 20,
+            top: 20,
             left: '50%',
             transform: 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
             background: 'rgba(255,255,255,0.12)',
             backdropFilter: 'blur(20px)',
             border: '1px solid rgba(255,255,255,0.2)',
             borderRadius: 999,
-            padding: '6px 16px',
-            color: 'rgba(255,255,255,0.8)',
-            fontSize: 12,
+            padding: '8px 16px',
+            color: 'rgba(255,255,255,0.85)',
+            fontSize: 13,
+            fontWeight: 500,
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
+            fontFamily: 'Inter, sans-serif',
           }}
         >
-          <span className="material-icons-round" style={{ fontSize: 14 }}>info</span>
-          Klik elemen untuk melihat properti
+          <span className="material-icons-round" style={{ fontSize: 16 }}>center_focus_strong</span>
+          Reset tampilan
         </button>
       )}
     </div>

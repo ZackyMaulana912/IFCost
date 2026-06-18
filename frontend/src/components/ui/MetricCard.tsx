@@ -12,9 +12,20 @@ export default function MetricCard({ label, value, icon, iconColor, iconBg }: Me
       className="card"
       style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}
     >
-      <div style={{ flex: 1 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 400, marginBottom: 8 }}>{label}</div>
-        <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--text)', lineHeight: 1 }}>{value}</div>
+        <div
+          style={{
+            // perkecil font otomatis untuk nominal panjang (mis. "Rp 569.700.000")
+            fontSize: value.length > 12 ? 20 : value.length > 9 ? 24 : 32,
+            fontWeight: 700,
+            color: 'var(--text)',
+            lineHeight: 1.1,
+            wordBreak: 'break-word',
+          }}
+        >
+          {value}
+        </div>
       </div>
       <div
         style={{
